@@ -1,5 +1,12 @@
 #include "kernel.h"
 
+#include "settingsmanager.h"
+#include "authorizationmanager.h"
+#include "usermanager.h"
+#include "messagemanager.h"
+#include "longpollmanager.h"
+
+
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QUrl>
@@ -15,6 +22,8 @@ Kernel::Kernel(QObject *parent) :
     networkAccessManager = new QNetworkAccessManager(this);
     authManager = new AuthorizationManager(this);
     userManager = new UserManager(this);
+    messageManager = new MessageManager(this);
+
     logger = new QMessageLogger("kernel.log", 17, "Kernel::Kernel");
     logger->debug("App started");
 
@@ -29,11 +38,14 @@ Kernel::Kernel(QObject *parent) :
         }
     }
 
+    longPollManager = new LongPollManager(this, true);
 }
 Kernel::~Kernel(){
     delete authManager;
     delete logger;
     delete userManager;
+    delete messageManager;
+    delete longPollManager;
 }
 
 void Kernel::setAccessToken(QString accessToken)
@@ -44,6 +56,7 @@ void Kernel::setAccessToken(QString accessToken)
 QJsonDocument Kernel::callMethodViaGet(QString method, QList< QPair<QString, QString> > parameters)
 {
     parameters.append(qMakePair(QStringLiteral("access_token"), accessToken));
+    parameters.append(qMakePair(QStringLiteral("v"), QStringLiteral("5.34")));
 //    QUrl parametersUrl;
 //    parametersUrl.setQuery(QUrlQuery(parameters));
     QUrl url;
@@ -67,6 +80,20 @@ QJsonDocument Kernel::callMethodViaGet(QString method, QList< QPair<QString, QSt
     //qDebug() << QString(reply->readAll());
     QJsonParseError err;
     QJsonDocument jsonResponse = QJsonDocument::fromJson(reply->readAll()/*, &err*/);
+
+    qDebug() << QString(jsonResponse.toJson());
     //qDebug() << err.errorString();
+    return jsonResponse;
+}
+
+QJsonDocument Kernel::loadUrl(QString urlString)
+{
+    QUrl url(urlString);
+    QNetworkRequest request(url);
+    QNetworkReply *reply = networkAccessManager->get(request);
+    QEventLoop pause;
+    QObject::connect(reply, SIGNAL(finished()), &pause, SLOT(quit()));
+    pause.exec();
+    QJsonDocument jsonResponse = QJsonDocument::fromJson(reply->readAll());
     return jsonResponse;
 }

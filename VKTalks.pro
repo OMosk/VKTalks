@@ -18,7 +18,9 @@ SOURCES += main.cpp\
     kernel.cpp \
     settingsmanager.cpp \
     authorizationmanager.cpp \
-    usermanager.cpp
+    usermanager.cpp \
+    messagemanager.cpp \
+    longpollmanager.cpp
 
 HEADERS  += mainwindow.h \
     kernel.h \
@@ -26,6 +28,12 @@ HEADERS  += mainwindow.h \
     settingsmanager.h \
     authorizationmanager.h \
     user.h \
-    usermanager.h
+    usermanager.h \
+    message.h \
+    dialog.h \
+    groupchat.h \
+    messagemanager.h \
+    attachment.h \
+    longpollmanager.h
 
 FORMS    += mainwindow.ui
